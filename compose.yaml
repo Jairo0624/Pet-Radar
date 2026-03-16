@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgis/postgis:16-master
+    container_name: petradar-db
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: petradar_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - petradar_data:/var/lib/postgresql/data
+
+volumes:
+  petradar_data:
