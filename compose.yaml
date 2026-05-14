@@ -1,6 +1,5 @@
 services:
 
-  
   db:
     image: postgis/postgis:16-master
     container_name: petradar-db
@@ -21,6 +20,25 @@ services:
       - "6379:6379"
     volumes:
       - petradar_redis_data:/data
+
+  pet-radar-api:
+    image: ghcr.io/jairo0624/petradar-api:latest 
+    container_name: petradar-api
+    ports:
+      - "3000:3000"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - APPINSIGHTS_CONNECTION_STRING=${APPINSIGHTS_CONNECTION_STRING}
+      - MAILER_EMAIL=${MAILER_EMAIL}
+      - MAILER_PASSWORD=${MAILER_PASSWORD}
+      - MAILER_SERVICE=${MAILER_SERVICE}
+      - MAPBOX_TOKEN=${MAPBOX_TOKEN}
 
 volumes:
   petradar_data:
