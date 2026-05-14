@@ -31,4 +31,4 @@ jobs:
           context: .
           push: true
           # Esto tomará tu usuario automáticamente y le pondrá la etiqueta "latest"
-          tags: ghcr.io/${{ github.repository_owner }}/petradar-api:latest
+          tags: ghcr.io/jairo0624/petradar-api:latest
