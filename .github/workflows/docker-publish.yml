@@ -1,0 +1,34 @@
+name: Construir y Subir PetRadar API a GHCR
+
+on:
+  push:
+    branches:
+      - main 
+
+jobs:
+  build-and-push-image:
+    runs-on: ubuntu-latest
+
+    # Damos permisos para que GitHub pueda subir el paquete por nosotros
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Descargar el código del repositorio
+        uses: actions/checkout@v4
+
+      - name: Iniciar sesión en GitHub Container Registry (GHCR)
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }} # Este token es automático, no tienes que configurar nada
+
+      - name: Construir y subir la imagen de Docker
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          # Esto tomará tu usuario automáticamente y le pondrá la etiqueta "latest"
+          tags: ghcr.io/${{ github.repository_owner }}/petradar-api:latest

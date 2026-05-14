@@ -7,13 +7,17 @@ import { LostPetsModule } from './lost-pets/lost-pets.module';
 import { FoundPetsModule } from './found-pets/found-pets.module';
 import { EmailService } from './email/email.service';
 import { EmailModule } from './email/email.module';
+import { CacheModule } from './cache/cache.module'; 
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true, // Variables disponibles en todo el proyecto
     }),
-    
+
+    CacheModule,
+
+    // 3. Configura Postgres esperando a que las variables de entorno estén listas
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -30,9 +34,7 @@ import { EmailModule } from './email/email.module';
     }),
     
     LostPetsModule,
-    
     FoundPetsModule,
-    
     EmailModule,
   ],
   controllers: [AppController],

@@ -7,6 +7,9 @@ import { FoundPet } from './entities/found-pet.entity';
 import { LostPet } from '../lost-pets/entities/lost-pet.entity';
 import { Point } from 'geojson';
 import { EmailService } from 'src/email/email.service';
+import { CacheService } from 'src/cache/cache.service';
+
+const CACHE_KEY_ALL_FOUND_PETS = "found_pets:all";
 
 @Injectable()
 export class FoundPetsService {
@@ -18,6 +21,7 @@ export class FoundPetsService {
     @InjectRepository(LostPet)
     private readonly lostPetRepository: Repository<LostPet>,
     private readonly emailService: EmailService,
+    private readonly cacheService: CacheService
   ) {}
 
   async create(createFoundPetDto: CreateFoundPetDto) {
@@ -32,6 +36,8 @@ export class FoundPetsService {
       location,
     });
     const savedPet = await this.foundPetRepository.save(newFoundPet);
+
+    await this.cacheService.delete(CACHE_KEY_ALL_FOUND_PETS);
 
     // Usamos .query() para mandar SQL puro a la base de datos
     const matches = await this.lostPetRepository.query(
@@ -79,12 +85,31 @@ export class FoundPetsService {
     };
   }
 
-  findAll() {
-    return `This action returns all foundPets`;
+  async findAll() {
+    const cachedPets = await this.cacheService.get<FoundPet[]>(CACHE_KEY_ALL_FOUND_PETS);
+    
+    if (cachedPets && cachedPets.length > 0) {
+      console.log('🐾 Retornando mascotas encontradas desde REDIS');
+      return cachedPets;
+    }
+
+    console.log('🐘 Retornando mascotas encontradas desde POSTGRES');
+    const pets = await this.foundPetRepository.find({
+      // Si tienes una columna de fecha, descomenta esto para ordenarlos:
+      // order: { id: 'DESC' }, 
+    });
+
+    await this.cacheService.set(CACHE_KEY_ALL_FOUND_PETS, pets);
+    
+    return pets;
   }
 
   findOne(id: number) {
-    return `This action returns a #${id} foundPet`;
+    return this.foundPetRepository.findOne({
+      where: {
+        id,
+      },
+    });
   }
 
   update(id: number, updateFoundPetDto: UpdateFoundPetDto) {

@@ -58,4 +58,5 @@ export class LostPet {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
+
 }

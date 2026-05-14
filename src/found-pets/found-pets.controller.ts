@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete , UseInterceptors} from '@nestjs/common';
 import { FoundPetsService } from './found-pets.service';
 import { CreateFoundPetDto } from './dto/create-found-pet.dto';
 import { UpdateFoundPetDto } from './dto/update-found-pet.dto';
+import { CacheInterceptor } from '@nestjs/cache-manager';
 
 @Controller('found-pets')
 export class FoundPetsController {

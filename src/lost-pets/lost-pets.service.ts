@@ -5,6 +5,9 @@ import { UpdateLostPetDto } from './dto/update-lost-pet.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { LostPet } from './entities/lost-pet.entity';
+import { CacheService } from 'src/cache/cache.service';
+
+const CACHE_KEY_ALL_LOST_PETS = "lost_pets:all";
 
 @Injectable()
 export class LostPetsService {
@@ -12,34 +15,48 @@ export class LostPetsService {
   constructor(
     @InjectRepository(LostPet)
     private readonly lostPetRepository: Repository<LostPet>,
+    private readonly cacheService: CacheService,
   ) {}
 
- async create(createLostPetDto: CreateLostPetDto) {
-    // 1. Extraemos la latitud y longitud, y guardamos el resto de los datos en "rest"
-    const { lat, lng, ...rest } = createLostPetDto;
+  async findAll() {
+    const cachedPets = await this.cacheService.get<LostPet[]>(CACHE_KEY_ALL_LOST_PETS);
+    
+    if (cachedPets && cachedPets.length > 0) {
+      console.log('Retornando mascotas perdidas desde REDIS');
+      return cachedPets;
+    }
 
-    // 2. Creamos el objeto espacial (GeoJSON)
-    // ¡REGLA DE ORO!: En mapas siempre va primero la Longitud (X) y luego la Latitud (Y)
-    const location : Point = {
-      type: 'Point',
-      coordinates: [lng, lat], 
-    };
-
-    // 3. Preparamos el registro fusionando los datos de texto con nuestra nueva ubicación
-    const newLostPet = this.lostPetRepository.create({
-      ...rest,
-      location,
+    console.log('🐘 Retornando mascotas perdidas desde POSTGRES');
+    const pets = await this.lostPetRepository.find({
+      where: { isActive: true },
+      order: { lostDate: 'DESC' },
     });
 
-    // 4. Lo guardamos en la base de datos
-    return await this.lostPetRepository.save(newLostPet);
-  }
-  findAll() {
-    return `This action returns all lostPets`;
+    // 3. Los guardamos en Redis para la próxima vez
+    await this.cacheService.set(CACHE_KEY_ALL_LOST_PETS, pets);
+    
+    return pets;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} lostPet`;
+  async create(createLostPetDto: CreateLostPetDto) {
+    const { lat, lng, ...rest } = createLostPetDto;
+    const location: any = { type: 'Point', coordinates: [lng, lat] };
+    const newLostPet = this.lostPetRepository.create({ ...rest, location });
+    const savedPet = await this.lostPetRepository.save(newLostPet);
+
+    // 👇 
+    await this.cacheService.delete(CACHE_KEY_ALL_LOST_PETS);
+
+    return savedPet;
+  }
+
+  async findOne(id: number) {
+    return await this.lostPetRepository.findOne({
+      where: {
+        id,
+        isActive: true,
+      },
+    });
   }
 
   update(id: number, updateLostPetDto: UpdateLostPetDto) {
