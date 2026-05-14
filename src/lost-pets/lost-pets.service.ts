@@ -22,7 +22,7 @@ export class LostPetsService {
     const cachedPets = await this.cacheService.get<LostPet[]>(CACHE_KEY_ALL_LOST_PETS);
     
     if (cachedPets && cachedPets.length > 0) {
-      console.log('Retornando mascotas perdidas desde REDIS');
+      console.log('🐾 Retornando mascotas perdidas desde REDIS');
       return cachedPets;
     }
 

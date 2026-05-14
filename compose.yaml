@@ -1,45 +1,39 @@
 services:
-
-  db:
-    image: postgis/postgis:16-master
+  postgres:
+    image: postgis/postgis:15-3.3-alpine
     container_name: petradar-db
-    restart: always
     environment:
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: petradar_db
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     ports:
-      - "5433:5432"
-    volumes:
-      - petradar_data:/var/lib/postgresql/data
+      - "5434:5432"
 
   redis:
     image: redis:alpine
-    container_name: pet-radar-redis
-    restart: always
+    container_name: petradar-redis
     ports:
       - "6379:6379"
-    volumes:
-      - petradar_redis_data:/data
 
-  pet-radar-api:
-    image: ghcr.io/jairo0624/petradar-api:latest 
+  api:
+    image: ghcr.io/jairo0624/petradar-api:latest
     container_name: petradar-api
     ports:
       - "3000:3000"
     environment:
-      - DB_HOST=postgres
+      - DB_HOST=postgres 
       - DB_PORT=5432
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=${DB_NAME}
-      - REDIS_HOST=redis
+      - REDIS_HOST=redis 
       - REDIS_PORT=6379
-      - APPINSIGHTS_CONNECTION_STRING=${APPINSIGHTS_CONNECTION_STRING}
+      - APPLICATIONINSIGHTS_CONNECTION_STRING=${APPLICATIONINSIGHTS_CONNECTION_STRING}
       - MAILER_EMAIL=${MAILER_EMAIL}
       - MAILER_PASSWORD=${MAILER_PASSWORD}
       - MAILER_SERVICE=${MAILER_SERVICE}
       - MAPBOX_TOKEN=${MAPBOX_TOKEN}
 
-volumes:
-  petradar_data:
-  petradar_redis_data:
+    depends_on:
+      - postgres
+      - redis

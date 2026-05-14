@@ -46,13 +46,13 @@ export class FoundPetsService {
         ST_X(location::geometry) AS lost_lon,
         ST_Y(location::geometry) AS lost_lat,
         ST_Distance(
-          location,
+          location::geography,
           ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography
         ) AS distance
       FROM lost_pets
       WHERE is_active = true
         AND ST_DWithin(
-          location,
+          location::geography,
           ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography,
           500
         )
@@ -95,7 +95,6 @@ export class FoundPetsService {
 
     console.log('🐘 Retornando mascotas encontradas desde POSTGRES');
     const pets = await this.foundPetRepository.find({
-      // Si tienes una columna de fecha, descomenta esto para ordenarlos:
       // order: { id: 'DESC' }, 
     });
 
